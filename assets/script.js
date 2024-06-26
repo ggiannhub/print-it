@@ -23,45 +23,83 @@ const nextButton = document.querySelector('.next');
 const dotsContainer = document.querySelector('.dots');
 
 let currentSlide = 0;
+let isSlideShowActive = false; // Flag pour pister l^état du slideshow
 
-// Generate slides dynamically from the array
+const slideIntervalTime = 3000; // Intervalle en milliseconds (e.g., 3000ms = 3 seconds)
+
+// Générer les slides de façon dynamique à partir du tableau
 slidesData.forEach(slide => {
-    const slideDiv = document.createElement('div');
-    slideDiv.classList.add('slide');
-    slideDiv.innerHTML = `${slide.content}<div class="overlay">${slide.overlayText}</div>`;
-    slidesContainer.appendChild(slideDiv);
+  const slideDiv = document.createElement('div');
+  slideDiv.classList.add('slide');
+  slideDiv.innerHTML = `${slide.content}<div class="overlay">${slide.overlayText}</div>`;
+  slidesContainer.appendChild(slideDiv);
 });
 
-// Generate dots dynamically
+// Générer les points de séléction dynamiquement
 const totalSlides = slidesData.length;
 for (let i = 0; i < totalSlides; i++) {
-    const dot = document.createElement('div');
-    dot.classList.add('dot');
-    dot.addEventListener('click', () => goToSlide(i));
-    dotsContainer.appendChild(dot);
+  const dot = document.createElement('div');
+  dot.classList.add('dot');
+  dot.addEventListener('click', () => goToSlide(i));
+  dotsContainer.appendChild(dot);
 }
 
 function goToSlide(index) {
-    if (index < 0) {
-        currentSlide = totalSlides - 1; // Loop to the last slide
-    } else if (index >= totalSlides) {
-        currentSlide = 0; // Loop to the first slide
-    } else {
-        currentSlide = index;
-    }
-    slidesContainer.style.transform = `translateX(-${currentSlide * 100}%)`;
-    updateDots();
+  if (index < 0) {
+    currentSlide = totalSlides - 1; // Boucle vers le dernier slide
+  } else if (index >= totalSlides) {
+    currentSlide = 0; // Boucle vers le première slide
+  } else {
+    currentSlide = index;
+  }
+  slidesContainer.style.transform = `translateX(-${currentSlide * 100}%)`;
+  updateDots();
+  
+  // Redemarrage du slideshow s'il est actif après navigation manuelle
+  if (isSlideShowActive) {
+    startSlideShow();
+  }
 }
 
 function updateDots() {
-    const allDots = document.querySelectorAll('.dot');
-    allDots.forEach((dot, index) => {
-        dot.classList.toggle('active', index === currentSlide);
-    });
+  const allDots = document.querySelectorAll('.dot');
+  allDots.forEach((dot, index) => {
+    dot.classList.toggle('active', index === currentSlide);
+  });
 }
 
-prevButton.addEventListener('click', () => goToSlide(currentSlide - 1));
-nextButton.addEventListener('click', () => goToSlide(currentSlide + 1));
+function startSlideShow() {
+  if (!isSlideShowActive) { // Demarer seulement s'il n'est déjà en cours
+    isSlideShowActive = true;
+    slideInterval = setInterval(() => {
+      goToSlide(currentSlide + 1);
+    }, slideIntervalTime);
+  }
+}
 
-// Initialize the carousel
+function stopSlideShow() {
+  clearInterval(slideInterval);
+  isSlideShowActive = false;
+}
+
+// Écouteurs d'évènements pour les boutons de navigation
+prevButton.addEventListener('click', () => {
+  stopSlideShow();
+  goToSlide(currentSlide - 1);
+});
+
+nextButton.addEventListener('click', () => {
+  stopSlideShow();
+  goToSlide(currentSlide + 1);
+});
+
+// Écouteurs d'évènements pour mouseover et focus
+const carousel = document.querySelector('.carousel');
+carousel.addEventListener('mouseenter', stopSlideShow);
+carousel.addEventListener('focusin', stopSlideShow);
+carousel.addEventListener('mouseleave', startSlideShow);
+carousel.addEventListener('focusout', startSlideShow);
+
+// Initialisation du carrousel
 updateDots();
+startSlideShow();
